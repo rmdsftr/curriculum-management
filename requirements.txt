@@ -1,0 +1,6 @@
+fastapi
+sqlmodel
+uvicorn
+python-dotenv
+pydantic-settings
+uuid
