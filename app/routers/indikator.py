@@ -1,5 +1,5 @@
 from fastapi import APIRouter, Depends, HTTPException, status
-from sqlmodel import Session, select
+from sqlmodel import Session, select, delete
 from app.db import get_session
 from app.schemas.indikator import CreateIndikator
 from app.models.indikator import IndikatorCPL
@@ -61,3 +61,14 @@ async def create_indikator(
         "message": "Indikator CPL berhasil dibuat.",
         "data": new_indikator
     }
+
+
+@router.delete("/{id_indikator}", status_code=status.HTTP_204_NO_CONTENT)
+async def deleteIndikator(id_indikator:str, session: Session = Depends(get_session)):
+    indikator = session.get(IndikatorCPL, id_indikator)
+    if not indikator:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Indikator tidak ditemukan")
+    
+    hapus = delete(IndikatorCPL).where(IndikatorCPL.id_indikator == id_indikator)
+    session.exec(hapus)
+    session.commit()
