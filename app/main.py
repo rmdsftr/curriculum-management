@@ -16,7 +16,6 @@ app = FastAPI(
 @app.on_event("startup")
 def on_startup():
     print("Starting up application...")
-    init_db()
     print("Application ready!")
 
 @app.get("/")
