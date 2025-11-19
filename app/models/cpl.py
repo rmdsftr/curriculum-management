@@ -5,6 +5,7 @@ import uuid
 if TYPE_CHECKING:
     from .kurikulum import Kurikulum
     from .indikator import IndikatorCPL
+    from .cpl_matkul import CPLMataKuliah
 
 class CPL(SQLModel, table=True):
     __tablename__ = "cpl"
@@ -15,3 +16,4 @@ class CPL(SQLModel, table=True):
     
     kurikulum: Optional["Kurikulum"] = Relationship(back_populates="cpl_list")
     indikator_list: List["IndikatorCPL"] = Relationship(back_populates="cpl")
+    matkul_list: List["CPLMataKuliah"] = Relationship(back_populates="cpl")

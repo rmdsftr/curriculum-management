@@ -1,6 +1,9 @@
-from sqlmodel import SQLModel, Field
+from sqlmodel import SQLModel, Field, Relationship
 from datetime import datetime
-from typing import Optional
+from typing import Optional, List, TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from .cpl_matkul import CPLMataKuliah
 
 class MataKuliah(SQLModel, table=True):
     __tablename__ = "mata_kuliah"
@@ -11,3 +14,5 @@ class MataKuliah(SQLModel, table=True):
     semester: int
     created_at: datetime = Field(default_factory=datetime.utcnow)
     updated_at: datetime = Field(default_factory=datetime.utcnow)
+    
+    cpl_list: List["CPLMataKuliah"] = Relationship(back_populates="mata_kuliah")

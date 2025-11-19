@@ -3,6 +3,7 @@ from app.models.kurikulum import Kurikulum, StatusEnum
 from app.models.cpl import CPL
 from app.models.indikator import IndikatorCPL
 from app.models.matkul import MataKuliah
+from app.models.cpl_matkul import CPLMataKuliah 
 from datetime import datetime
 import uuid
 
@@ -140,6 +141,7 @@ def seed_indikator_cpl(session: Session, cpl_list):
     print(f"✓ Seeded {len(indikator_list)} Indikator CPL")
     return indikator_list
 
+
 def seed_mata_kuliah(session: Session):
     """Seed data untuk tabel mata kuliah"""
     print("Seeding Mata Kuliah...")
@@ -216,6 +218,47 @@ def seed_mata_kuliah(session: Session):
     session.commit()
     print(f"✓ Seeded {len(matkul_list)} Mata Kuliah")
     return matkul_list
+
+def seed_cpl_matkul(session: Session, cpl_list, matkul_list):
+    """Seed data untuk tabel relasi CPL - Mata Kuliah"""
+    print("Seeding CPL-MataKuliah relations...")
+    
+    
+    cpl_matkul_data = [
+        
+        {"id_cpl": cpl_list[0].id_cpl, "id_matkul": matkul_list[0].id_matkul},  
+        {"id_cpl": cpl_list[0].id_cpl, "id_matkul": matkul_list[1].id_matkul},  
+        {"id_cpl": cpl_list[0].id_cpl, "id_matkul": matkul_list[7].id_matkul},  
+        
+        
+        {"id_cpl": cpl_list[1].id_cpl, "id_matkul": matkul_list[6].id_matkul},  
+        {"id_cpl": cpl_list[1].id_cpl, "id_matkul": matkul_list[2].id_matkul},  
+        {"id_cpl": cpl_list[1].id_cpl, "id_matkul": matkul_list[3].id_matkul},  
+        
+        
+        {"id_cpl": cpl_list[2].id_cpl, "id_matkul": matkul_list[7].id_matkul},  
+        {"id_cpl": cpl_list[2].id_cpl, "id_matkul": matkul_list[8].id_matkul},  
+        {"id_cpl": cpl_list[2].id_cpl, "id_matkul": matkul_list[9].id_matkul},  
+        
+        
+        {"id_cpl": cpl_list[3].id_cpl, "id_matkul": matkul_list[2].id_matkul},  
+        {"id_cpl": cpl_list[3].id_cpl, "id_matkul": matkul_list[8].id_matkul},  
+        
+        
+        {"id_cpl": cpl_list[4].id_cpl, "id_matkul": matkul_list[6].id_matkul},  
+        {"id_cpl": cpl_list[4].id_cpl, "id_matkul": matkul_list[5].id_matkul},  
+    ]
+    
+    cpl_matkul_list = []
+    for data in cpl_matkul_data:
+        cpl_matkul = CPLMataKuliah(**data)
+        session.add(cpl_matkul)
+        cpl_matkul_list.append(cpl_matkul)
+    
+    session.commit()
+    print(f"✓ Seeded {len(cpl_matkul_list)} CPL-MataKuliah relations")
+    return cpl_matkul_list
+
 
 def run_seeder(engine):
     """Jalankan semua seeder"""

@@ -2,12 +2,22 @@ from fastapi import FastAPI
 from app.db import init_db
 from app.utils.db_check import db_connection
 from app.routers import user
+from app.routers import kurikulum
+from app.routers import cpl
+from app.routers import indikator
+from app.routers import matkul
 
-app = FastAPI()
+app = FastAPI(
+    title="Curriculum Management API",
+    description="API untuk manajemen kurikulum, CPL, dan mata kuliah",
+    version="1.0.0"
+)
 
 @app.on_event("startup")
 def on_startup():
+    print("Starting up application...")
     init_db()
+    print("Application ready!")
 
 @app.get("/")
 async def main():
@@ -16,7 +26,11 @@ async def main():
     else:
         status = "connection failed"
     return {
-        "database" : status
+        "database": status
     }
 
 app.include_router(user.router)
+app.include_router(kurikulum.router)
+app.include_router(cpl.router)
+app.include_router(indikator.router)
+app.include_router(matkul.router)
