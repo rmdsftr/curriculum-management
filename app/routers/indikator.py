@@ -1,10 +1,11 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlmodel import Session, select, delete
 from app.db import get_session
-from app.schemas.indikator import CreateIndikator
+from app.schemas.indikator import CreateIndikator, IndikatorCPLUpdate
 from app.models.indikator import IndikatorCPL
 from app.models.cpl import CPL
 import re
+import uuid
 
 router = APIRouter(prefix="/indikator", tags=["indikator"])
 
@@ -72,3 +73,40 @@ async def deleteIndikator(id_indikator:str, session: Session = Depends(get_sessi
     hapus = delete(IndikatorCPL).where(IndikatorCPL.id_indikator == id_indikator)
     session.exec(hapus)
     session.commit()
+
+# ================= UPDATE =================
+@router.patch("/{id_indikator}", status_code=status.HTTP_200_OK)
+async def update_indikator(
+    id_indikator: str,
+    data: IndikatorCPLUpdate,
+    session: Session = Depends(get_session)
+):
+    # Ambil indikator berdasarkan ID
+    item = session.get(IndikatorCPL, id_indikator)
+    if not item:
+        raise HTTPException(status_code=404, detail="Indikator tidak ditemukan")
+
+    updates = data.model_dump(exclude_unset=True)
+
+    # Jika user ingin update id_cpl, pastikan CPL valid
+    if "id_cpl" in updates:
+        cpl_item = session.get(CPL, updates["id_cpl"])
+        if not cpl_item:
+            raise HTTPException(status_code=404, detail="CPL tujuan tidak ditemukan")
+
+    # Update field sesuai input
+    for key, value in updates.items():
+        setattr(item, key, value)
+
+    session.add(item)
+    session.commit()
+    session.refresh(item)
+
+    return {
+        "message": "Berhasil memperbarui indikator",
+        "indikator": {
+            "id_indikator": item.id_indikator,
+            "deskripsi": item.deskripsi,
+            "id_cpl": item.id_cpl
+        }
+    }
