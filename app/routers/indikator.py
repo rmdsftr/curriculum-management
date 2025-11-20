@@ -9,20 +9,24 @@ import uuid
 
 router = APIRouter(prefix="/indikator", tags=["indikator"])
 
-@router.post("/{id_cpl}", status_code=status.HTTP_201_CREATED)
+@router.post("/{id_kurikulum}/{id_cpl}", status_code=status.HTTP_201_CREATED)
 async def create_indikator(
+    id_kurikulum: uuid.UUID,
     id_cpl: str,
     data: CreateIndikator,
     session: Session = Depends(get_session)
 ):
     cpl = session.exec(
-        select(CPL).where(CPL.id_cpl == id_cpl)
+        select(CPL).where(
+            CPL.id_kurikulum == id_kurikulum,
+            CPL.id_cpl == id_cpl
+        )
     ).first()
 
     if not cpl:
         raise HTTPException(
             404,
-            "CPL tidak ditemukan."
+            "CPL tidak ditemukan di kurikulum ini."
         )
     
     if not data.id_indikator.strip():
@@ -30,28 +34,28 @@ async def create_indikator(
   
     if not data.deskripsi.strip():
         raise HTTPException(400, "deskripsi tidak boleh kosong.")
-
-    pattern = r"^IND-\d{2}-\d{2}$"
-    if not re.match(pattern, data.id_indikator):
-        raise HTTPException(
-            400,
-            "Format id_indikator tidak valid. Gunakan pola 'IND-XX-YY', XX untuk no CPL, YY untuk noo Indikator."
-        )
+    
     
     existing_indikator = session.exec(
-        select(IndikatorCPL).where(IndikatorCPL.id_indikator == data.id_indikator)
+        select(IndikatorCPL).where(
+            IndikatorCPL.id_kurikulum == id_kurikulum,
+            IndikatorCPL.id_cpl == id_cpl,
+            IndikatorCPL.id_indikator == data.id_indikator
+        )
     ).first()
 
     if existing_indikator:
         raise HTTPException(
             400,
-            "id_indikator sudah digunakan. Gunakan id_indikator lain."
+            "id_indikator sudah digunakan untuk CPL ini. Gunakan id_indikator lain."
         )
 
+    
     new_indikator = IndikatorCPL(
+        id_kurikulum=id_kurikulum,
+        id_cpl=id_cpl,
         id_indikator=data.id_indikator,
-        deskripsi=data.deskripsi,
-        id_cpl=id_cpl
+        deskripsi=data.deskripsi
     )
 
     session.add(new_indikator)
@@ -60,43 +64,123 @@ async def create_indikator(
 
     return {
         "message": "Indikator CPL berhasil dibuat.",
-        "data": new_indikator
+        "data": {
+            "id_kurikulum": str(new_indikator.id_kurikulum),
+            "id_cpl": new_indikator.id_cpl,
+            "id_indikator": new_indikator.id_indikator,
+            "deskripsi": new_indikator.deskripsi
+        }
     }
 
 
-@router.delete("/{id_indikator}", status_code=status.HTTP_204_NO_CONTENT)
-async def deleteIndikator(id_indikator:str, session: Session = Depends(get_session)):
-    indikator = session.get(IndikatorCPL, id_indikator)
-    if not indikator:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Indikator tidak ditemukan")
+@router.delete("/{id_kurikulum}/{id_cpl}/{id_indikator}", status_code=status.HTTP_204_NO_CONTENT)
+async def deleteIndikator(
+    id_kurikulum: uuid.UUID,
+    id_cpl: str,
+    id_indikator: str,
+    session: Session = Depends(get_session)
+):
     
-    hapus = delete(IndikatorCPL).where(IndikatorCPL.id_indikator == id_indikator)
+    statement = select(IndikatorCPL).where(
+        IndikatorCPL.id_kurikulum == id_kurikulum,
+        IndikatorCPL.id_cpl == id_cpl,
+        IndikatorCPL.id_indikator == id_indikator
+    )
+    indikator = session.exec(statement).first()
+    
+    if not indikator:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Indikator tidak ditemukan"
+        )
+    
+    hapus = delete(IndikatorCPL).where(
+        IndikatorCPL.id_kurikulum == id_kurikulum,
+        IndikatorCPL.id_cpl == id_cpl,
+        IndikatorCPL.id_indikator == id_indikator
+    )
     session.exec(hapus)
     session.commit()
 
-# ================= UPDATE =================
-@router.patch("/{id_indikator}", status_code=status.HTTP_200_OK)
+
+@router.patch("/{id_kurikulum}/{id_cpl}/{id_indikator}", status_code=status.HTTP_200_OK)
 async def update_indikator(
+    id_kurikulum: uuid.UUID,
+    id_cpl: str,
     id_indikator: str,
     data: IndikatorCPLUpdate,
     session: Session = Depends(get_session)
 ):
-    # Ambil indikator berdasarkan ID
-    item = session.get(IndikatorCPL, id_indikator)
+    statement = select(IndikatorCPL).where(
+        IndikatorCPL.id_kurikulum == id_kurikulum,
+        IndikatorCPL.id_cpl == id_cpl,
+        IndikatorCPL.id_indikator == id_indikator
+    )
+    item = session.exec(statement).first()
+    
     if not item:
         raise HTTPException(status_code=404, detail="Indikator tidak ditemukan")
 
     updates = data.model_dump(exclude_unset=True)
 
-    # Jika user ingin update id_cpl, pastikan CPL valid
+    
     if "id_cpl" in updates:
-        cpl_item = session.get(CPL, updates["id_cpl"])
+        new_id_cpl = updates["id_cpl"]
+        
+        statement_cpl = select(CPL).where(
+            CPL.id_kurikulum == id_kurikulum,
+            CPL.id_cpl == new_id_cpl
+        )
+        cpl_item = session.exec(statement_cpl).first()
+        
         if not cpl_item:
-            raise HTTPException(status_code=404, detail="CPL tujuan tidak ditemukan")
+            raise HTTPException(
+                status_code=404, 
+                detail=f"CPL '{new_id_cpl}' tidak ditemukan di kurikulum ini"
+            )
+        
+        if new_id_cpl != id_cpl:
+            
+            check_statement = select(IndikatorCPL).where(
+                IndikatorCPL.id_kurikulum == id_kurikulum,
+                IndikatorCPL.id_cpl == new_id_cpl,
+                IndikatorCPL.id_indikator == id_indikator
+            )
+            existing = session.exec(check_statement).first()
+            
+            if existing:
+                raise HTTPException(
+                    status_code=400,
+                    detail=f"Indikator dengan id_cpl '{new_id_cpl}' dan id_indikator '{id_indikator}' sudah ada"
+                )
+            
+            session.delete(item)
+            session.flush()
+            
+            new_item = IndikatorCPL(
+                id_kurikulum=id_kurikulum,
+                id_cpl=new_id_cpl,
+                id_indikator=id_indikator,
+                deskripsi=updates.get("deskripsi", item.deskripsi)
+            )
+            session.add(new_item)
+            session.commit()
+            session.refresh(new_item)
+            
+            return {
+                "message": "Berhasil memperbarui indikator (dengan id_cpl baru)",
+                "indikator": {
+                    "id_kurikulum": str(new_item.id_kurikulum),
+                    "id_cpl": new_item.id_cpl,
+                    "id_indikator": new_item.id_indikator,
+                    "deskripsi": new_item.deskripsi
+                }
+            }
 
-    # Update field sesuai input
+    
     for key, value in updates.items():
-        setattr(item, key, value)
+        if key not in ["id_kurikulum", "id_cpl", "id_indikator"]:  
+            setattr(item, key, value)
 
     session.add(item)
     session.commit()
@@ -105,8 +189,9 @@ async def update_indikator(
     return {
         "message": "Berhasil memperbarui indikator",
         "indikator": {
+            "id_kurikulum": str(item.id_kurikulum),
+            "id_cpl": item.id_cpl,
             "id_indikator": item.id_indikator,
-            "deskripsi": item.deskripsi,
-            "id_cpl": item.id_cpl
+            "deskripsi": item.deskripsi
         }
     }

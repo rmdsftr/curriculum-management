@@ -24,15 +24,18 @@ async def inputMatkul(data: createMatkul, session: Session = Depends(get_session
             detail="Mata kuliah dengan ID tersebut sudah ada."
         )
 
-    for id_cpl in data.id_cpl:
+    for cpl_input in data.cpl_list:
         cpl_exists = session.exec(
-            select(CPL).where(CPL.id_cpl == id_cpl)
+            select(CPL).where(
+                CPL.id_kurikulum == cpl_input.id_kurikulum,
+                CPL.id_cpl == cpl_input.id_cpl
+            )
         ).first()
 
         if not cpl_exists:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"CPL dengan ID {id_cpl} tidak ditemukan."
+                detail=f"CPL dengan ID {cpl_input.id_cpl} di kurikulum {cpl_input.id_kurikulum} tidak ditemukan."
             )
 
     newMatkul = MataKuliah(
@@ -46,18 +49,20 @@ async def inputMatkul(data: createMatkul, session: Session = Depends(get_session
     session.refresh(newMatkul)
 
     newRelations = []
-    for id_cpl in data.id_cpl:
+    for cpl_input in data.cpl_list:
         existing_relation = session.exec(
             select(CPLMataKuliah).where(
-                (CPLMataKuliah.id_matkul == data.id_matkul) &
-                (CPLMataKuliah.id_cpl == id_cpl)
+                CPLMataKuliah.id_kurikulum == cpl_input.id_kurikulum,
+                CPLMataKuliah.id_cpl == cpl_input.id_cpl,
+                CPLMataKuliah.id_matkul == data.id_matkul
             )
         ).first()
 
         if not existing_relation:
             newCplMatkul = CPLMataKuliah(
-                id_matkul=newMatkul.id_matkul,
-                id_cpl=id_cpl
+                id_kurikulum=cpl_input.id_kurikulum,
+                id_cpl=cpl_input.id_cpl,
+                id_matkul=newMatkul.id_matkul
             )
             session.add(newCplMatkul)
             newRelations.append(newCplMatkul)
@@ -67,11 +72,24 @@ async def inputMatkul(data: createMatkul, session: Session = Depends(get_session
     for relation in newRelations:
         session.refresh(relation)
 
-    newMatkul.cpl_list = []
     return {
         "message": "Berhasil menambahkan mata kuliah",
-        "matkul": newMatkul,
-        "relasi": newRelations
+        "matkul": {
+            "id_matkul": newMatkul.id_matkul,
+            "mata_kuliah": newMatkul.mata_kuliah,
+            "sks": newMatkul.sks,
+            "semester": newMatkul.semester,
+            "created_at": newMatkul.created_at,
+            "updated_at": newMatkul.updated_at
+        },
+        "relasi": [
+            {
+                "id_kurikulum": str(r.id_kurikulum),
+                "id_cpl": r.id_cpl,
+                "id_matkul": r.id_matkul
+            }
+            for r in newRelations
+        ]
     }
 
 
@@ -81,14 +99,15 @@ async def deleteMatkul(id_matkul: str, session: Session = Depends(get_session)):
     if not matkul:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mata kuliah tidak ditemukan")
     
+    
     delete_cpl_matkul = delete(CPLMataKuliah).where(CPLMataKuliah.id_matkul == id_matkul)
     session.exec(delete_cpl_matkul)
+    
     
     delete_matkul = delete(MataKuliah).where(MataKuliah.id_matkul == id_matkul)
     session.exec(delete_matkul)
     
     session.commit()
-
 
 
 @router.patch("/{id_matkul}", status_code=status.HTTP_200_OK)
@@ -108,27 +127,33 @@ async def updateMatkul(id_matkul: str, data: updateMatkul, session: Session = De
     
     matkul.updated_at = timestamp_now()
     
-    if data.id_cpl is not None:
-        for id_cpl in data.id_cpl:
+    
+    if data.cpl_list is not None:
+        
+        for cpl_input in data.cpl_list:
             cpl_exists = session.exec(
-                select(CPL).where(CPL.id_cpl == id_cpl)
+                select(CPL).where(
+                    CPL.id_kurikulum == cpl_input.id_kurikulum,
+                    CPL.id_cpl == cpl_input.id_cpl
+                )
             ).first()
             
             if not cpl_exists:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail="CPL dengan ID {id_cpl} tidak ditemukan."
+                    detail=f"CPL dengan ID {cpl_input.id_cpl} di kurikulum {cpl_input.id_kurikulum} tidak ditemukan."
                 )
-                
+         
         delete_stmt = delete(CPLMataKuliah).where(
             CPLMataKuliah.id_matkul == id_matkul
         )
         session.exec(delete_stmt)
-        
-        for id_cpl in data.id_cpl:
+           
+        for cpl_input in data.cpl_list:
             new_relation = CPLMataKuliah(
-                id_matkul=id_matkul,
-                id_cpl=id_cpl
+                id_kurikulum=cpl_input.id_kurikulum,
+                id_cpl=cpl_input.id_cpl,
+                id_matkul=id_matkul
             )
             session.add(new_relation)
     
@@ -136,17 +161,30 @@ async def updateMatkul(id_matkul: str, data: updateMatkul, session: Session = De
     session.commit()
     session.refresh(matkul)
     
+    
+    relations = session.exec(
+        select(CPLMataKuliah).where(CPLMataKuliah.id_matkul == id_matkul)
+    ).all()
+    
     return {
         "message": "Berhasil mengupdate mata kuliah",
-        "matkul": matkul,
+        "matkul": {
+            "id_matkul": matkul.id_matkul,
+            "mata_kuliah": matkul.mata_kuliah,
+            "sks": matkul.sks,
+            "semester": matkul.semester,
+            "created_at": matkul.created_at,
+            "updated_at": matkul.updated_at
+        },
         "relasi": [
-            {"id_matkul": r.id_matkul, "id_cpl": r.id_cpl}
-            for r in session.exec(
-                select(CPLMataKuliah).where(CPLMataKuliah.id_matkul == id_matkul)
-            ).all()
+            {
+                "id_kurikulum": str(r.id_kurikulum),
+                "id_cpl": r.id_cpl,
+                "id_matkul": r.id_matkul
+            }
+            for r in relations
         ]
     }
-
 
 
 @router.get("/{id_matkul}", status_code=status.HTTP_200_OK)
@@ -156,14 +194,22 @@ async def getDetailMatkul(id_matkul: str, session: Session = Depends(get_session
         raise HTTPException(status_code=404, detail="Mata kuliah tidak ditemukan")
 
     cpl_rows = session.exec(
-        select(CPL).join(CPLMataKuliah).where(CPLMataKuliah.id_matkul == id_matkul)
+        select(CPL, CPLMataKuliah.id_kurikulum)
+        .join(CPLMataKuliah, 
+              (CPL.id_kurikulum == CPLMataKuliah.id_kurikulum) & 
+              (CPL.id_cpl == CPLMataKuliah.id_cpl))
+        .where(CPLMataKuliah.id_matkul == id_matkul)
     ).all()
 
     cpl_list = []
 
-    for cpl in cpl_rows:
+    for cpl, id_kurikulum in cpl_rows:
+        
         indikator_rows = session.exec(
-            select(IndikatorCPL).where(IndikatorCPL.id_cpl == cpl.id_cpl)
+            select(IndikatorCPL).where(
+                IndikatorCPL.id_kurikulum == cpl.id_kurikulum,
+                IndikatorCPL.id_cpl == cpl.id_cpl
+            )
         ).all()
 
         indikator_list = [
@@ -175,6 +221,7 @@ async def getDetailMatkul(id_matkul: str, session: Session = Depends(get_session
         ]
 
         cpl_list.append({
+            "id_kurikulum": str(cpl.id_kurikulum),
             "id_cpl": cpl.id_cpl,
             "deskripsi": cpl.deskripsi,
             "indikator": indikator_list
