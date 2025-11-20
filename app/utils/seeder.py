@@ -48,29 +48,29 @@ def seed_cpl(session: Session, kurikulum_list):
     
     cpl_data = [
         {
+            "id_kurikulum": kurikulum_list[0].id_kurikulum,
             "id_cpl": "CPL-01",
-            "deskripsi": "Mampu menerapkan pemikiran logis, kritis, sistematis, dan inovatif dalam konteks pengembangan atau implementasi ilmu pengetahuan dan teknologi",
-            "id_kurikulum": kurikulum_list[0].id_kurikulum
+            "deskripsi": "Mampu menerapkan pemikiran logis, kritis, sistematis, dan inovatif dalam konteks pengembangan atau implementasi ilmu pengetahuan dan teknologi"
         },
         {
+            "id_kurikulum": kurikulum_list[0].id_kurikulum,
             "id_cpl": "CPL-02",
-            "deskripsi": "Mampu menunjukkan kinerja mandiri, bermutu, dan terukur dalam pengembangan sistem informasi",
-            "id_kurikulum": kurikulum_list[0].id_kurikulum
+            "deskripsi": "Mampu menunjukkan kinerja mandiri, bermutu, dan terukur dalam pengembangan sistem informasi"
         },
         {
+            "id_kurikulum": kurikulum_list[0].id_kurikulum,
             "id_cpl": "CPL-03",
-            "deskripsi": "Mampu mengkaji implikasi pengembangan atau implementasi ilmu pengetahuan teknologi informasi",
-            "id_kurikulum": kurikulum_list[0].id_kurikulum
+            "deskripsi": "Mampu mengkaji implikasi pengembangan atau implementasi ilmu pengetahuan teknologi informasi"
         },
         {
+            "id_kurikulum": kurikulum_list[1].id_kurikulum,
             "id_cpl": "CPL-04",
-            "deskripsi": "Mampu mengambil keputusan secara tepat dalam konteks penyelesaian masalah di bidang teknologi informasi",
-            "id_kurikulum": kurikulum_list[1].id_kurikulum
+            "deskripsi": "Mampu mengambil keputusan secara tepat dalam konteks penyelesaian masalah di bidang teknologi informasi"
         },
         {
+            "id_kurikulum": kurikulum_list[1].id_kurikulum,
             "id_cpl": "CPL-05",
-            "deskripsi": "Mampu memelihara dan mengembangkan jaringan kerja dengan pembimbing, kolega, sejawat",
-            "id_kurikulum": kurikulum_list[1].id_kurikulum
+            "deskripsi": "Mampu memelihara dan mengembangkan jaringan kerja dengan pembimbing, kolega, sejawat"
         }
     ]
     
@@ -90,44 +90,52 @@ def seed_indikator_cpl(session: Session, cpl_list):
     
     indikator_data = [
         {
+            "id_kurikulum": cpl_list[0].id_kurikulum,
+            "id_cpl": cpl_list[0].id_cpl,
             "id_indikator": "IND-01-01",
-            "deskripsi": "Mampu mengidentifikasi masalah komputasi dengan pendekatan logis dan sistematis",
-            "id_cpl": cpl_list[0].id_cpl
+            "deskripsi": "Mampu mengidentifikasi masalah komputasi dengan pendekatan logis dan sistematis"
         },
         {
+            "id_kurikulum": cpl_list[0].id_kurikulum,
+            "id_cpl": cpl_list[0].id_cpl,
             "id_indikator": "IND-01-02",
-            "deskripsi": "Mampu merancang solusi inovatif untuk permasalahan komputasi",
-            "id_cpl": cpl_list[0].id_cpl
+            "deskripsi": "Mampu merancang solusi inovatif untuk permasalahan komputasi"
         },
         {
+            "id_kurikulum": cpl_list[0].id_kurikulum,
+            "id_cpl": cpl_list[0].id_cpl,
             "id_indikator": "IND-01-03",
-            "deskripsi": "Mampu mengimplementasikan algoritma dengan efisien",
-            "id_cpl": cpl_list[0].id_cpl
+            "deskripsi": "Mampu mengimplementasikan algoritma dengan efisien"
         },
         {
+            "id_kurikulum": cpl_list[1].id_kurikulum,
+            "id_cpl": cpl_list[1].id_cpl,
             "id_indikator": "IND-02-01",
-            "deskripsi": "Mampu bekerja secara mandiri dalam pengembangan sistem",
-            "id_cpl": cpl_list[1].id_cpl
+            "deskripsi": "Mampu bekerja secara mandiri dalam pengembangan sistem"
         },
         {
+            "id_kurikulum": cpl_list[1].id_kurikulum,
+            "id_cpl": cpl_list[1].id_cpl,
             "id_indikator": "IND-02-02",
-            "deskripsi": "Mampu menghasilkan dokumentasi teknis yang berkualitas",
-            "id_cpl": cpl_list[1].id_cpl
+            "deskripsi": "Mampu menghasilkan dokumentasi teknis yang berkualitas"
         },
         {
+            "id_kurikulum": cpl_list[2].id_kurikulum,
+            "id_cpl": cpl_list[2].id_cpl,
             "id_indikator": "IND-03-01",
-            "deskripsi": "Mampu menganalisis dampak teknologi terhadap masyarakat",
-            "id_cpl": cpl_list[2].id_cpl
+            "deskripsi": "Mampu menganalisis dampak teknologi terhadap masyarakat"
         },
         {
+            "id_kurikulum": cpl_list[3].id_kurikulum,
+            "id_cpl": cpl_list[3].id_cpl,
             "id_indikator": "IND-04-01",
-            "deskripsi": "Mampu mengambil keputusan berdasarkan analisis data yang tepat",
-            "id_cpl": cpl_list[3].id_cpl
+            "deskripsi": "Mampu mengambil keputusan berdasarkan analisis data yang tepat"
         },
         {
+            "id_kurikulum": cpl_list[4].id_kurikulum,
+            "id_cpl": cpl_list[4].id_cpl,
             "id_indikator": "IND-05-01",
-            "deskripsi": "Mampu berkomunikasi efektif dalam tim multidisiplin",
-            "id_cpl": cpl_list[4].id_cpl
+            "deskripsi": "Mampu berkomunikasi efektif dalam tim multidisiplin"
         }
     ]
     
@@ -223,30 +231,29 @@ def seed_cpl_matkul(session: Session, cpl_list, matkul_list):
     """Seed data untuk tabel relasi CPL - Mata Kuliah"""
     print("Seeding CPL-MataKuliah relations...")
     
-    
     cpl_matkul_data = [
+        # CPL-01 (Kurikulum TI 2020) relationships
+        {"id_kurikulum": cpl_list[0].id_kurikulum, "id_cpl": cpl_list[0].id_cpl, "id_matkul": matkul_list[0].id_matkul},  # Algoritma
+        {"id_kurikulum": cpl_list[0].id_kurikulum, "id_cpl": cpl_list[0].id_cpl, "id_matkul": matkul_list[1].id_matkul},  # Struktur Data
+        {"id_kurikulum": cpl_list[0].id_kurikulum, "id_cpl": cpl_list[0].id_cpl, "id_matkul": matkul_list[7].id_matkul},  # Kecerdasan Buatan
         
-        {"id_cpl": cpl_list[0].id_cpl, "id_matkul": matkul_list[0].id_matkul},  
-        {"id_cpl": cpl_list[0].id_cpl, "id_matkul": matkul_list[1].id_matkul},  
-        {"id_cpl": cpl_list[0].id_cpl, "id_matkul": matkul_list[7].id_matkul},  
+        # CPL-02 (Kurikulum TI 2020) relationships
+        {"id_kurikulum": cpl_list[1].id_kurikulum, "id_cpl": cpl_list[1].id_cpl, "id_matkul": matkul_list[6].id_matkul},  # RPL
+        {"id_kurikulum": cpl_list[1].id_kurikulum, "id_cpl": cpl_list[1].id_cpl, "id_matkul": matkul_list[2].id_matkul},  # Basis Data
+        {"id_kurikulum": cpl_list[1].id_kurikulum, "id_cpl": cpl_list[1].id_cpl, "id_matkul": matkul_list[3].id_matkul},  # Pemrograman Web
         
+        # CPL-03 (Kurikulum TI 2020) relationships
+        {"id_kurikulum": cpl_list[2].id_kurikulum, "id_cpl": cpl_list[2].id_cpl, "id_matkul": matkul_list[7].id_matkul},  # Kecerdasan Buatan
+        {"id_kurikulum": cpl_list[2].id_kurikulum, "id_cpl": cpl_list[2].id_cpl, "id_matkul": matkul_list[8].id_matkul},  # Machine Learning
+        {"id_kurikulum": cpl_list[2].id_kurikulum, "id_cpl": cpl_list[2].id_cpl, "id_matkul": matkul_list[9].id_matkul},  # Keamanan Informasi
         
-        {"id_cpl": cpl_list[1].id_cpl, "id_matkul": matkul_list[6].id_matkul},  
-        {"id_cpl": cpl_list[1].id_cpl, "id_matkul": matkul_list[2].id_matkul},  
-        {"id_cpl": cpl_list[1].id_cpl, "id_matkul": matkul_list[3].id_matkul},  
+        # CPL-04 (Kurikulum SI 2020) relationships
+        {"id_kurikulum": cpl_list[3].id_kurikulum, "id_cpl": cpl_list[3].id_cpl, "id_matkul": matkul_list[2].id_matkul},  # Basis Data
+        {"id_kurikulum": cpl_list[3].id_kurikulum, "id_cpl": cpl_list[3].id_cpl, "id_matkul": matkul_list[8].id_matkul},  # Machine Learning
         
-        
-        {"id_cpl": cpl_list[2].id_cpl, "id_matkul": matkul_list[7].id_matkul},  
-        {"id_cpl": cpl_list[2].id_cpl, "id_matkul": matkul_list[8].id_matkul},  
-        {"id_cpl": cpl_list[2].id_cpl, "id_matkul": matkul_list[9].id_matkul},  
-        
-        
-        {"id_cpl": cpl_list[3].id_cpl, "id_matkul": matkul_list[2].id_matkul},  
-        {"id_cpl": cpl_list[3].id_cpl, "id_matkul": matkul_list[8].id_matkul},  
-        
-        
-        {"id_cpl": cpl_list[4].id_cpl, "id_matkul": matkul_list[6].id_matkul},  
-        {"id_cpl": cpl_list[4].id_cpl, "id_matkul": matkul_list[5].id_matkul},  
+        # CPL-05 (Kurikulum SI 2020) relationships
+        {"id_kurikulum": cpl_list[4].id_kurikulum, "id_cpl": cpl_list[4].id_cpl, "id_matkul": matkul_list[6].id_matkul},  # RPL
+        {"id_kurikulum": cpl_list[4].id_kurikulum, "id_cpl": cpl_list[4].id_cpl, "id_matkul": matkul_list[5].id_matkul},  # Jaringan Komputer
     ]
     
     cpl_matkul_list = []
@@ -268,11 +275,12 @@ def run_seeder(engine):
     
     with Session(engine) as session:
         try:
-            
+            # Seed dalam urutan yang benar (respecting foreign keys)
             kurikulum_list = seed_kurikulum(session)
             cpl_list = seed_cpl(session, kurikulum_list)
             indikator_list = seed_indikator_cpl(session, cpl_list)
             matkul_list = seed_mata_kuliah(session)
+            cpl_matkul_list = seed_cpl_matkul(session, cpl_list, matkul_list)
             
             print("\n" + "="*50)
             print("✓ Database seeding completed successfully!")
@@ -291,7 +299,8 @@ def clear_all_data(engine):
     
     with Session(engine) as session:
         try:
-            
+            # Hapus dalam urutan terbalik (respecting foreign keys)
+            session.query(CPLMataKuliah).delete()
             session.query(IndikatorCPL).delete()
             session.query(MataKuliah).delete()
             session.query(CPL).delete()
