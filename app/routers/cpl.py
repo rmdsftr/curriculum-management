@@ -14,50 +14,33 @@ router = APIRouter(prefix="/cpl", tags=["cpl"])
 
 @router.post("/{id_kurikulum}", status_code=status.HTTP_201_CREATED)
 async def create_cpl(
-    id_kurikulum: str,
+    id_kurikulum: uuid.UUID,
     data: CreateCPL,
     session: Session = Depends(get_session)
-):
-    try:
-        uuid.UUID(id_kurikulum)
-    except ValueError:
-        raise HTTPException(
-            400,
-            "id_kurikulum harus berupa UUID yang valid."
-        )
-    
+):    
     kurikulum = session.exec(
         select(Kurikulum).where(Kurikulum.id_kurikulum == id_kurikulum)
     ).first()
 
     if not kurikulum:
-        raise HTTPException(
-            404,
-            "Kurikulum tidak ditemukan."
-        )
+        raise HTTPException(404,"Kurikulum tidak ditemukan.")
     
     if not data.id_cpl.strip():
         raise HTTPException(400, "id_cpl tidak boleh kosong.")
-  
-    if not data.deskripsi.strip():
-        raise HTTPException(400, "deskripsi tidak boleh kosong.")
-
+    
     pattern = r"^CPL-\d{2}$"
     if not re.match(pattern, data.id_cpl):
-        raise HTTPException(
-            400,
-            "Format id_cpl tidak valid. Gunakan pola 'CPL-XX' (dua digit)."
-        )
+        raise HTTPException(400,"Format id_cpl tidak valid. Gunakan pola 'CPL-XX' (dua digit).")
 
     existing_cpl = session.exec(
-        select(CPL).where(CPL.id_cpl == data.id_cpl)
+        select(CPL).where((CPL.id_cpl == data.id_cpl) & (CPL.id_kurikulum == id_kurikulum))
     ).first()
 
     if existing_cpl:
-        raise HTTPException(
-            400,
-            "id_cpl sudah digunakan. Gunakan id_cpl lain."
-        )
+        raise HTTPException(400,"id_cpl sudah digunakan. Gunakan id_cpl lain.")
+  
+    if not data.deskripsi.strip():
+        raise HTTPException(400, "deskripsi tidak boleh kosong.")
 
     new_cpl = CPL(
         id_cpl=data.id_cpl,
@@ -74,13 +57,14 @@ async def create_cpl(
         "cpl": new_cpl
     }
 
-@router.get("/{id_cpl}", status_code=status.HTTP_200_OK)
+@router.get("/{id_kurikulum}/{id_cpl}", status_code=status.HTTP_200_OK)
 async def get_detail_cpl(
+    id_kurikulum: uuid.UUID,
     id_cpl: str,
     session: Session = Depends(get_session) 
-):
+):   
     cpl = session.exec(
-        select(CPL).where(CPL.id_cpl == id_cpl)
+        select(CPL).where((CPL.id_kurikulum == id_kurikulum) & (CPL.id_cpl == id_cpl))
     ).first()
 
     if not cpl:
@@ -133,14 +117,15 @@ async def get_detail_cpl(
     }
 
 
-@router.patch("/{id_cpl}", status_code=status.HTTP_200_OK)
+@router.patch("/{id_kurikulum}/{id_cpl}", status_code=status.HTTP_200_OK)
 async def update_cpl(
+    id_kurikulum: uuid.UUID,
     id_cpl: str,
     data: UpdateCPL,
     session: Session = Depends(get_session)
-):
+):   
     cpl = session.exec(
-        select(CPL).where(CPL.id_cpl == id_cpl)
+        select(CPL).where((CPL.id_kurikulum == id_kurikulum) & (CPL.id_cpl == id_cpl))
     ).first()
 
     if not cpl:
@@ -160,13 +145,14 @@ async def update_cpl(
         "cpl": cpl
     }
 
-@router.delete("/{id_cpl}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{id_kurikulum}/{id_cpl}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_cpl(
+    id_kurikulum: uuid.UUID,
     id_cpl: str,
     session: Session = Depends(get_session)
-):
+):    
     cpl = session.exec(
-        select(CPL).where(CPL.id_cpl == id_cpl)
+        select(CPL).where((CPL.id_kurikulum == id_kurikulum) & (CPL.id_cpl == id_cpl))
     ).first()
 
     if not cpl:
