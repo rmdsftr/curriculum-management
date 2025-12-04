@@ -31,10 +31,10 @@ async def create_indikator(
     
     if not data.id_indikator.strip():
         raise HTTPException(400, "id_indikator tidak boleh kosong.")
-  
-    if not data.deskripsi.strip():
-        raise HTTPException(400, "deskripsi tidak boleh kosong.")
     
+    pattern = r"^IND-\d{2}-\d{2}$"
+    if not re.match(pattern, data.id_indikator):
+        raise HTTPException(400,"Format id_indikator tidak valid. Gunakan pola 'IND-XX-YY', XX sesuai no CPL.")
     
     existing_indikator = session.exec(
         select(IndikatorCPL).where(
@@ -50,6 +50,8 @@ async def create_indikator(
             "id_indikator sudah digunakan untuk CPL ini. Gunakan id_indikator lain."
         )
 
+    if not data.deskripsi.strip():
+        raise HTTPException(400, "deskripsi tidak boleh kosong.")
     
     new_indikator = IndikatorCPL(
         id_kurikulum=id_kurikulum,
