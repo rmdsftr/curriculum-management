@@ -1,7 +1,6 @@
 import sys
 from pathlib import Path
 
-
 root_dir = Path(__file__).parent.parent.parent
 sys.path.insert(0, str(root_dir))
 
@@ -36,7 +35,6 @@ def show_table_info():
                 col_type = str(col['type'])
                 nullable = "NULL" if col['nullable'] else "NOT NULL"
                 print(f"    - {col['name']}: {col_type} {nullable}")
-            
             
             fks = inspector.get_foreign_keys(table)
             if fks:
@@ -91,7 +89,6 @@ def reset():
     print(" DATABASE RESET (DROP + CREATE)")
     print("="*60 + "\n")
     
-    
     tables = check_tables()
     if tables:
         print(f"⚠️  This will DELETE {len(tables)} table(s):")
@@ -136,7 +133,6 @@ def status():
     print("="*60 + "\n")
     
     try:
-        
         with engine.connect() as conn:
             result = conn.execute(text("SELECT version()"))
             version = result.fetchone()[0]

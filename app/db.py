@@ -10,6 +10,8 @@ def init_db():
     from app.models.indikator import IndikatorCPL
     from app.models.matkul import MataKuliah
     from app.models.cpl_matkul import CPLMataKuliah  
+    from app.models.user import User
+    from app.models.token_blacklist import TokenBlacklist
     
     SQLModel.metadata.create_all(engine)
     print("✓ Database tables created successfully!")
