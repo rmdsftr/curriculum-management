@@ -7,13 +7,41 @@ from app.models.cpl_matkul import CPLMataKuliah
 from app.models.cpl import CPL
 from app.models.indikator import IndikatorCPL
 from app.utils.current_datetime import timestamp_now
+from app.utils.auth import require_kadep, require_kadep_or_dosen
 
+router = APIRouter(
+    prefix="/matkul", 
+    tags=["matkul"],
+    responses={404: {"description": "Tidak ditemukan"}}
+)
 
-router = APIRouter(prefix="/matkul", tags=["matkul"])
-
-
-@router.post("/", status_code=status.HTTP_201_CREATED)  
+@router.post(
+    "/", 
+    status_code=status.HTTP_201_CREATED,
+    summary="Tambah Mata Kuliah Baru",
+    description="Menambahkan mata kuliah baru beserta relasi dengan CPL (Capaian Pembelajaran Lulusan)",
+    response_description="Data mata kuliah dan relasi CPL yang berhasil ditambahkan",
+    dependencies=[Depends(require_kadep_or_dosen)]
+)  
 async def inputMatkul(data: createMatkul, session: Session = Depends(get_session)):
+    """
+    Menambahkan mata kuliah baru ke database.
+    
+    **Parameter:**
+    - **id_matkul**: ID unik mata kuliah
+    - **mata_kuliah**: Nama mata kuliah
+    - **sks**: Jumlah SKS
+    - **semester**: Semester pengajaran
+    - **cpl_list**: Daftar CPL yang terkait dengan mata kuliah
+    
+    **Validasi:**
+    - ID mata kuliah harus unik
+    - Semua CPL dalam cpl_list harus sudah ada di database
+    
+    **Return:**
+    - Data mata kuliah yang baru dibuat
+    - Daftar relasi CPL-Matkul yang terbentuk
+    """
     existing_matkul = session.exec(
         select(MataKuliah).where(MataKuliah.id_matkul == data.id_matkul)
     ).first()
@@ -93,16 +121,37 @@ async def inputMatkul(data: createMatkul, session: Session = Depends(get_session
     }
 
 
-@router.delete("/{id_matkul}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{id_matkul}", 
+    status_code=status.HTTP_204_NO_CONTENT,
+    summary="Hapus Mata Kuliah",
+    description="Menghapus mata kuliah beserta semua relasi CPL yang terkait",
+    response_description="Tidak ada konten (sukses)",
+    dependencies=[Depends(require_kadep)]
+)
 async def deleteMatkul(id_matkul: str, session: Session = Depends(get_session)):
+    """
+    Menghapus mata kuliah dari database.
+    
+    **Parameter:**
+    - **id_matkul**: ID mata kuliah yang akan dihapus
+    
+    **Proses:**
+    1. Menghapus semua relasi CPL-Matkul
+    2. Menghapus data mata kuliah
+    
+    **Error:**
+    - 404: Mata kuliah tidak ditemukan
+    """
     matkul = session.get(MataKuliah, id_matkul)
     if not matkul:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mata kuliah tidak ditemukan")
-    
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Mata kuliah tidak ditemukan"
+        )
     
     delete_cpl_matkul = delete(CPLMataKuliah).where(CPLMataKuliah.id_matkul == id_matkul)
     session.exec(delete_cpl_matkul)
-    
     
     delete_matkul = delete(MataKuliah).where(MataKuliah.id_matkul == id_matkul)
     session.exec(delete_matkul)
@@ -110,11 +159,40 @@ async def deleteMatkul(id_matkul: str, session: Session = Depends(get_session)):
     session.commit()
 
 
-@router.patch("/{id_matkul}", status_code=status.HTTP_200_OK)
+@router.patch(
+    "/{id_matkul}", 
+    status_code=status.HTTP_200_OK,
+    summary="Update Mata Kuliah",
+    description="Mengupdate informasi mata kuliah dan/atau relasi CPL",
+    response_description="Data mata kuliah dan relasi CPL yang telah diupdate",
+    dependencies=[Depends(require_kadep_or_dosen)]
+)
 async def updateMatkul(id_matkul: str, data: updateMatkul, session: Session = Depends(get_session)):
+    """
+    Mengupdate data mata kuliah yang sudah ada.
+    
+    **Parameter:**
+    - **id_matkul**: ID mata kuliah yang akan diupdate
+    - **mata_kuliah** (opsional): Nama mata kuliah baru
+    - **sks** (opsional): Jumlah SKS baru
+    - **semester** (opsional): Semester baru
+    - **cpl_list** (opsional): Daftar CPL baru (akan mengganti semua relasi lama)
+    
+    **Catatan:**
+    - Hanya field yang diisi yang akan diupdate
+    - Jika cpl_list diisi, semua relasi CPL lama akan dihapus dan diganti dengan yang baru
+    - Timestamp updated_at akan otomatis diupdate
+    
+    **Return:**
+    - Data mata kuliah yang telah diupdate
+    - Daftar relasi CPL terkini
+    """
     matkul = session.get(MataKuliah, id_matkul)
     if not matkul:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Mata kuliah tidak ditemukan")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND, 
+            detail="Mata kuliah tidak ditemukan"
+        )
     
     if data.mata_kuliah is not None:
         matkul.mata_kuliah = data.mata_kuliah
@@ -126,7 +204,6 @@ async def updateMatkul(id_matkul: str, data: updateMatkul, session: Session = De
         matkul.semester = data.semester
     
     matkul.updated_at = timestamp_now()
-    
     
     if data.cpl_list is not None:
         
@@ -148,7 +225,7 @@ async def updateMatkul(id_matkul: str, data: updateMatkul, session: Session = De
             CPLMataKuliah.id_matkul == id_matkul
         )
         session.exec(delete_stmt)
-           
+          
         for cpl_input in data.cpl_list:
             new_relation = CPLMataKuliah(
                 id_kurikulum=cpl_input.id_kurikulum,
@@ -160,7 +237,6 @@ async def updateMatkul(id_matkul: str, data: updateMatkul, session: Session = De
     session.add(matkul)
     session.commit()
     session.refresh(matkul)
-    
     
     relations = session.exec(
         select(CPLMataKuliah).where(CPLMataKuliah.id_matkul == id_matkul)
@@ -187,11 +263,38 @@ async def updateMatkul(id_matkul: str, data: updateMatkul, session: Session = De
     }
 
 
-@router.get("/{id_matkul}", status_code=status.HTTP_200_OK)
+@router.get(
+    "/{id_matkul}", 
+    status_code=status.HTTP_200_OK,
+    summary="Detail Mata Kuliah",
+    description="Mengambil detail lengkap mata kuliah beserta CPL dan indikator yang terkait",
+    response_description="Data lengkap mata kuliah dengan CPL dan indikator",
+    dependencies=[Depends(require_kadep_or_dosen)]
+)
 async def getDetailMatkul(id_matkul: str, session: Session = Depends(get_session)):
+    """
+    Mengambil informasi detail mata kuliah.
+    
+    **Parameter:**
+    - **id_matkul**: ID mata kuliah yang ingin dilihat
+    
+    **Return:**
+    - Informasi lengkap mata kuliah (ID, nama, SKS, semester, timestamps)
+    - Daftar CPL yang terkait beserta:
+      - ID kurikulum
+      - ID CPL
+      - Deskripsi CPL
+      - Daftar indikator CPL (ID dan deskripsi)
+    
+    **Error:**
+    - 404: Mata kuliah tidak ditemukan
+    """
     matkul = session.get(MataKuliah, id_matkul)
     if not matkul:
-        raise HTTPException(status_code=404, detail="Mata kuliah tidak ditemukan")
+        raise HTTPException(
+            status_code=404, 
+            detail="Mata kuliah tidak ditemukan"
+        )
 
     cpl_rows = session.exec(
         select(CPL, CPLMataKuliah.id_kurikulum)
