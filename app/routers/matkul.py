@@ -341,3 +341,63 @@ async def getDetailMatkul(id_matkul: str, session: Session = Depends(get_session
         },
         "cpl": cpl_list  
     }
+
+
+@router.get(
+    "/", 
+    status_code=status.HTTP_200_OK,
+    summary="Daftar Semua Mata Kuliah",
+    description="Mengambil daftar semua mata kuliah beserta CPL yang terkait",
+    response_description="Daftar lengkap mata kuliah dengan CPL masing-masing",
+    dependencies=[Depends(require_kadep_or_dosen)]
+)
+async def getAllMatkul(session: Session = Depends(get_session)):
+    """
+    Mengambil daftar semua mata kuliah beserta CPL yang terkait.
+    
+    **Return:**
+    - Daftar mata kuliah yang berisi:
+      - id_matkul: Kode mata kuliah
+      - mata_kuliah: Nama mata kuliah
+      - sks: Jumlah SKS
+      - semester: Semester pengajaran
+      - cpl: Daftar CPL yang terkait (id_kurikulum, id_cpl, deskripsi)
+    """
+    
+    all_matkul = session.exec(select(MataKuliah)).all()
+    
+    result = []
+    
+    for matkul in all_matkul:
+        
+        cpl_rows = session.exec(
+            select(CPL, CPLMataKuliah.id_kurikulum)
+            .join(CPLMataKuliah, 
+                  (CPL.id_kurikulum == CPLMataKuliah.id_kurikulum) & 
+                  (CPL.id_cpl == CPLMataKuliah.id_cpl))
+            .where(CPLMataKuliah.id_matkul == matkul.id_matkul)
+        ).all()
+        
+        
+        cpl_list = [
+            {
+                "id_kurikulum": str(cpl.id_kurikulum),
+                "id_cpl": cpl.id_cpl,
+                "deskripsi": cpl.deskripsi
+            }
+            for cpl, _ in cpl_rows
+        ]
+        
+        
+        result.append({
+            "id_matkul": matkul.id_matkul,
+            "mata_kuliah": matkul.mata_kuliah,
+            "sks": matkul.sks,
+            "semester": matkul.semester,
+            "cpl": cpl_list
+        })
+    
+    return {
+        "message": "Berhasil mengambil semua mata kuliah",
+        "data": result
+    }
