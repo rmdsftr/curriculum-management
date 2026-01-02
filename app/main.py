@@ -6,6 +6,7 @@ from app.routers import kurikulum
 from app.routers import cpl
 from app.routers import indikator
 from app.routers import matkul
+from app.routers import cocktail
 from fastapi.middleware.cors import CORSMiddleware
 
 app = FastAPI(
@@ -46,3 +47,4 @@ app.include_router(kurikulum.router)
 app.include_router(cpl.router)
 app.include_router(indikator.router)
 app.include_router(matkul.router)
+app.include_router(cocktail.router)
