@@ -303,3 +303,79 @@ async def delete_cpl(
 
     session.delete(cpl)
     session.commit()
+
+
+@router.get(
+    "/kurikulum-aktif", 
+    status_code=status.HTTP_200_OK,
+    summary="Daftar CPL dari Kurikulum Aktif",
+    description="Mengambil semua CPL yang berasal dari kurikulum dengan status aktif",
+    response_description="Daftar CPL dari kurikulum aktif",
+    dependencies=[Depends(require_kadep_or_dosen)]
+)
+async def get_cpl_from_active_kurikulum(session: Session = Depends(get_session)):
+    """
+    Mengambil semua CPL dari kurikulum yang berstatus 'aktif'.
+    
+    **Fitur:**
+    - Hanya menampilkan CPL dari kurikulum aktif
+    - Berguna untuk mendapatkan CPL yang sedang berlaku
+    - Menampilkan informasi kurikulum parent untuk setiap CPL
+    
+    **Return:**
+    - **total**: Jumlah total CPL dari kurikulum aktif
+    - **data**: Array CPL dengan struktur:
+      - id_cpl: ID CPL
+      - deskripsi: Deskripsi CPL
+      - kurikulum: Informasi kurikulum parent
+        - id_kurikulum
+        - nama_kurikulum
+        - revisi
+        - status_kurikulum
+    
+    **Use Case:**
+    - Menampilkan CPL yang sedang berlaku di sistem
+    - Filter data untuk proses pembelajaran aktif
+    - Referensi untuk pembuatan RPS atau dokumen akademik
+    """
+    
+    kurikulum_aktif = session.exec(
+        select(Kurikulum).where(Kurikulum.status_kurikulum == "aktif")
+    ).all()
+    
+    if not kurikulum_aktif:
+        return {
+            "total": 0,
+            "data": []
+        }
+    
+    
+    id_kurikulum_aktif = [k.id_kurikulum for k in kurikulum_aktif]
+    
+    
+    cpl_list = session.exec(
+        select(CPL).where(CPL.id_kurikulum.in_(id_kurikulum_aktif))
+    ).all()
+    
+    
+    kurikulum_dict = {k.id_kurikulum: k for k in kurikulum_aktif}
+    
+    
+    result = []
+    for cpl in cpl_list:
+        kurikulum = kurikulum_dict.get(cpl.id_kurikulum)
+        result.append({
+            "id_cpl": cpl.id_cpl,
+            "deskripsi": cpl.deskripsi,
+            "kurikulum": {
+                "id_kurikulum": kurikulum.id_kurikulum,
+                "nama_kurikulum": kurikulum.nama_kurikulum,
+                "revisi": kurikulum.revisi,
+                "status_kurikulum": kurikulum.status_kurikulum
+            } if kurikulum else None
+        })
+    
+    return {
+        "total": len(result),
+        "data": result
+    }
