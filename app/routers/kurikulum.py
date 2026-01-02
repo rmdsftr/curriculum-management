@@ -115,7 +115,7 @@ async def get_all(session: Session = Depends(get_session)):
     summary="Update Kurikulum",
     description="Mengupdate informasi kurikulum yang sudah ada",
     response_description="Data kurikulum yang telah diupdate",
-    dependencies=[Depends(require_kadep_or_dosen)]
+    dependencies=[Depends(require_kadep)]
 )
 async def update_kurikulum(
     id_kurikulum: str, 
@@ -222,34 +222,3 @@ async def detail_kurikulum(id_kurikulum: str, session: Session = Depends(get_ses
             "cpl": cpl_list
         }
     }
-
-
-@router.delete(
-    "/{id_kurikulum}", 
-    status_code=status.HTTP_204_NO_CONTENT,
-    summary="Hapus Kurikulum",
-    description="Menghapus kurikulum dari sistem",
-    response_description="Tidak ada konten (sukses)",
-    dependencies=[Depends(require_kadep)]
-)
-async def delete_kurikulum(id_kurikulum: str, session: Session = Depends(get_session)):
-    """
-    Menghapus kurikulum dari database.
-    
-    **Parameter:**
-    - **id_kurikulum**: ID kurikulum yang akan dihapus (format UUID)
-    
-    **Peringatan:**
-    - Operasi ini akan menghapus kurikulum secara permanen
-    - Pastikan tidak ada relasi yang masih bergantung pada kurikulum ini
-    
-    **Error:**
-    - 404: Kurikulum tidak ditemukan
-    """
-    item = session.get(Kurikulum, id_kurikulum)
-    if not item:
-        raise HTTPException(status_code=404, detail="Kurikulum tidak ditemukan")
-
-    session.delete(item)
-    session.commit()
-    return
